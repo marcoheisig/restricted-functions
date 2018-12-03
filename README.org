@@ -1,0 +1,37 @@
+#+TITLE: Restricted Functions
+
+Many functions in Common Lisp are defined for a wide range of argument
+types.  Yet their behavior (in terms of performance, memory consumption and
+return value types) varies a lot depending on how many arguments of which
+type are supplied.  This library provides /restricted functions/, i.e.,
+functions that have been narrowed to a particular set of argument types.
+
+Each restricted function is an instance of =funcallable-standard-class=,
+and can be queried for a wide range of metadata, such as the number and
+type of the values it returns, its name, or its arity.  In particular, it
+is possible to query the cost of a restricted function in terms of CPU
+cycles, loads, stores and heap allocation on a given platform and Lisp
+implementation.
+
+Another feature is that each restricted function automatically defines an
+optimizing compiler macro of the same name.  This is convenient for writing
+code generators, where one can just write
+
+#+BEGIN_SRC lisp
+(let ((rf (restrict #'+ '(double-float double-float))))
+  (compile
+   nil
+   `(lambda (x y)
+      (,(function-name rf) x y))))
+#+END_SRC
+
+to get the equivalent of
+
+#+BEGIN_SRC lisp
+(compile
+ nil
+ `(lambda (x y)
+    (the double-float (+ (the double-float x) (the double-float y)))))
+#+END_SRC
+
+If you have any suggestions for this library, feel free to contact me!
