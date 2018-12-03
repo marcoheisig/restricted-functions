@@ -22,7 +22,8 @@
           (funcall function original-function-name types))))
 
 (defun find-restrictor (function-designator)
-  (gethash (coerce function-designator 'function) *restrictor-table* nil))
+  (values
+   (gethash (coerce function-designator 'function) *restrictor-table*)))
 
 (defmethod restrict ((rf restricted-function) (argument-types list))
   (restrict (original-function-name rf) argument-types))
@@ -32,3 +33,20 @@
     (if (null restrictor)
         function
         (funcall restrictor argument-types))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Caching
+
+(declaim (hash-table *restricted-function-cache*))
+
+(defvar *restricted-function-cache* (make-hash-table :test #'equal))
+
+(defmethod restrict :around ((object t) (argument-types list))
+  (let ((key (cons object argument-types)))
+    (multiple-value-bind (value present-p)
+        (gethash key *restricted-function-cache*)
+      (if (not present-p)
+          (let ((value (call-next-method)))
+            (setf (gethash key *restricted-function-cache*) value))
+          value))))
