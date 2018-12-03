@@ -101,7 +101,7 @@ for the Nth argument of FUNCTION."))
   (assert (<= 0 n)))
 
 (defmethod nth-value-type ((n integer) (function function))
-  (cond ((< n (1- (maximum-number-of-values function))) 't)
+  (cond ((< n (maximum-number-of-values function)) 't)
         (t 'null)))
 
 (defmethod argument-types ((function function))
