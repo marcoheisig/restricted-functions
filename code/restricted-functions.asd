@@ -6,11 +6,14 @@
   :depends-on
   ("alexandria"
    "closer-mop"
+   "introspect-environment"
+   "trivia"
    "trivial-arguments")
 
   :components
   ((:file "packages")
    (:file "function-lambda-lists")
+   (:file "type-inference")
    (:file "protocol")
    (:file "restricted-functions")
    (:file "restrict")
