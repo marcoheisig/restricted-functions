@@ -18,6 +18,6 @@
    (:file "restricted-functions")
    (:file "restrict")
 
-   (:module "restrictors"
+   (:module "inference-rules"
     :components
     ((:file "numbers")))))

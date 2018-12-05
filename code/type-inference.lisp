@@ -4,6 +4,18 @@
 ;;; selected subset of the types that are expressible in Common Lisp.  All
 ;;; other type-specifiers are either simplified to T, or NIL.
 
+(defvar *type-hierarchy*
+  '(t
+    (number
+     (integer u1 u2 u4 u8 u16 u32 u64 s1 s2 s4 s8 s16 s32 s64)
+     (float f16 f32 f64)
+     (complex c32 c64))
+    function
+    character
+    package
+    symbol
+    cons))
+
 (deftype u1 () 'bit)
 (deftype u2 () '(unsigned-byte 2))
 (deftype u4 () '(unsigned-byte 4))
@@ -42,17 +54,31 @@
 (define-float-types 32)
 (define-float-types 64)
 
-(defvar *type-hierarchy*
-  '(t
-    (number
-     (integer u1 u2 u4 u8 u16 u32 u64 s1 s2 s4 s8 s16 s32 s64)
-     (float f16 f32 f64)
-     (complex c32 c64))
-    function
-    character
-    package
-    symbol
-    cons))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Type Constructors
+
+(defun make-unsigned-byte-type (n)
+  (if (<= n 8)
+      (if (<= n 2)
+          (if (<= n 1) 'u1 'u2)
+          (if (<= n 4) 'u4 'u8))
+      (if (<= n 32)
+          (if (<= n 16) 'u16 'u32)
+          (if (<= n 64) 'u64 'integer))))
+
+(defun make-signed-byte-type (n)
+  (if (<= n 8)
+      (if (<= n 2)
+          (if (<= n 1) 's1 's2)
+          (if (<= n 4) 's4 's8))
+      (if (<= n 32)
+          (if (<= n 16) 's16 's32)
+          (if (<= n 64) 's64 'integer))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Simplification of Type Specifiers
 
 (defun simplify-type-specifier (type-specifier)
   (flet ((fail () (error "Invalid type specifier: ~A" type-specifier)))
@@ -134,20 +160,54 @@
   ;; TODO
   't)
 
-(defun make-unsigned-byte-type (n)
-  (if (<= n 8)
-      (if (<= n 2)
-          (if (<= n 1) 'u1 'u2)
-          (if (<= n 4) 'u4 'u8))
-      (if (<= n 32)
-          (if (<= n 16) 'u16 'u32)
-          (if (<= n 64) 'u64 'integer))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Obtaining the Simplified Type of an Object
 
-(defun make-signed-byte-type (n)
-  (if (<= n 8)
-      (if (<= n 2)
-          (if (<= n 1) 's1 's2)
-          (if (<= n 4) 's4 's8))
-      (if (<= n 32)
-          (if (<= n 16) 's16 's32)
-          (if (<= n 64) 's64 'integer))))
+(defgeneric simplified-type-of (object)
+  (:documentation
+   "Returns a simplified type specifier for a type that has OBJECT as an
+element.
+
+The expression (simplified-type-of OBJECT) yields exactly the same result
+as the expression (simplify-type (type-of OBJECT)), but the former is
+likely to be more efficient."))
+
+(defmethod simplified-type-of ((object t))
+  't)
+
+(defmethod simplified-type-of ((integer integer))
+  (let ((bits (integer-length integer)))
+    (if (minusp integer)
+        (make-signed-byte-type bits)
+        (make-unsigned-byte-type bits))))
+
+(defmethod simplified-type-of ((f32 #.+f32-type-symbol+))
+  'f32)
+
+(defmethod simplified-type-of ((f64 #.+f64-type-symbol+))
+  'f64)
+
+(defmethod simplified-type-of ((complex complex))
+  (typecase complex
+    ((complex #.+f32-type-symbol+) 'c32)
+    ((complex #.+f64-type-symbol+) 'c64)
+    (t (call-next-method))))
+
+(defmethod simplified-type-of ((number number))
+  'number)
+
+(defmethod simplified-type-of ((function function))
+  'function)
+
+(defmethod simplified-type-of ((character character))
+  'character)
+
+(defmethod simplified-type-of ((package package))
+  'package)
+
+(defmethod simplified-type-of ((symbol symbol))
+  'symbol)
+
+(defmethod simplified-type-of ((cons cons))
+  'cons)

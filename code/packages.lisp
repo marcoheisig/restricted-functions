@@ -3,9 +3,11 @@
 (cl:defpackage :restricted-functions
   (:use :closer-common-lisp)
   (:export
-   #:restrict
+
+   ;; The restricted function protocol.
    #:restricted-function
    #:restricted-function-p
+   #:restrict
    #:function-name
    #:original-function-name
    #:arity
@@ -16,5 +18,7 @@
    #:argument-types
    #:value-types
    #:function-type
-   #:defrestrictor
-   #:ensure-restrictor))
+
+   ;; Type inference utilities.
+   #:simplify-type-specifier
+   #:simplified-type-of))
