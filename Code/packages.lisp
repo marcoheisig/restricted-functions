@@ -17,8 +17,4 @@
    #:nth-argument-type
    #:argument-types
    #:value-types
-   #:function-type
-
-   ;; Type inference utilities.
-   #:simplify-type-specifier
-   #:simplified-type-of))
+   #:function-type))
