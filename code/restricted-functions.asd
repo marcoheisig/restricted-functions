@@ -11,12 +11,13 @@
    "trivial-arguments"
    "trivial-garbage")
 
+  :serial t
   :components
   ((:file "packages")
    (:file "generic-functions")
    (:file "function-lambda-lists")
    (:file "default-methods")
-   (:file "infer-type")
    (:file "restricted-function")
    (:file "restricted-function-cache")
+   (:file "simplified-type-inference")
    (:file "restrict")))

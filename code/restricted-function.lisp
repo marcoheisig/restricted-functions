@@ -56,7 +56,7 @@
                          (nreverse optional)
                          rest-p)))
         (mandatory (rest values-type) '()))
-      (values values-type nil nil)))
+      (values (list values-type) nil nil)))
 
 (defun generate-restricted-function-name ()
   (loop
