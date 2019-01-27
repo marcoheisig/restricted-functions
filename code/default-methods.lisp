@@ -40,11 +40,15 @@
     `(values
       ,@(loop for n below mandatory-values
               collect (nth-value-type n function))
-      &optional
-      ,@(loop for n from mandatory-values
-                below (+ mandatory-values optional-values)
-              collect (nth-value-type n function))
-      ,@(if rest-values-p '(&rest t) '()))))
+      ,@(if (zerop optional-values)
+            '()
+            `(&optional
+              ,@(loop for n from mandatory-values
+                        below (+ mandatory-values optional-values)
+                      collect (nth-value-type n function))))
+      ,@(if (not rest-values-p)
+            '()
+            '(&rest t)))))
 
 (defmethod function-type ((function function))
   `(ftype ,(argument-types function)

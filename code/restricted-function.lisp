@@ -3,11 +3,11 @@
 (defclass restricted-function (funcallable-standard-object)
   ((%name :initarg :name :reader name)
    (%original-function :initarg :original-function :reader original-function)
-   (%argument-types :initarg :argument-types :reader argument-types)
-   (%result-types :initarg :result-types :reader result-types)
    (%mandatory-values :initarg :mandatory-values :reader mandatory-values)
    (%optional-values :initarg :optional-values :reader optional-values)
-   (%rest-values-p :initarg :rest-values-p :reader rest-values-p))
+   (%rest-values-p :initarg :rest-values-p :reader rest-values-p)
+   (%atypes :initarg :atypes :reader atypes)
+   (%rtypes :initarg :rtypes :reader rtypes))
   (:metaclass funcallable-standard-class))
 
 (defmethod print-object ((rf restricted-function) stream)
@@ -24,11 +24,11 @@
            (rf (make-instance 'restricted-function
                  :name name
                  :original-function (coerce original-function 'function)
-                 :argument-types (coerce argument-types 'simple-vector)
-                 :result-types (concatenate 'simple-vector mandatory optional)
                  :mandatory-values (length mandatory)
                  :optional-values (length optional)
-                 :rest-values-p rest-values-p)))
+                 :rest-values-p rest-values-p
+                 :atypes (coerce argument-types 'simple-vector)
+                 :rtypes (concatenate 'simple-vector mandatory optional))))
       (set-funcallable-instance-function rf original-function)
       (setf (fdefinition name) rf)
       (setf (compiler-macro-function name)
@@ -88,4 +88,10 @@
 
 (defmethod arity ((rf restricted-function))
   (length
-   (argument-types rf)))
+   (atypes rf)))
+
+(defmethod nth-value-type ((n integer) (rf restricted-function))
+  (svref (rtypes rf) n))
+
+(defmethod nth-argument-type ((n integer) (rf restricted-function))
+  (svref (atypes rf) n))
