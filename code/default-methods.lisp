@@ -1,5 +1,15 @@
 (in-package #:restricted-functions)
 
+(defmethod arity ((function function))
+  (multiple-value-bind (mandatory maximal)
+      (function-arity function)
+    (if (= mandatory maximal)
+        mandatory
+        (error
+         "~@<Only functions with a fixed number of arguments are permitted, ~
+             but ~S takes between ~D and ~D arguments.~:@>"
+         function mandatory maximal))))
+
 (defmethod original-function ((function function))
   function)
 
@@ -12,12 +22,6 @@
 (defmethod rest-values-p ((function function))
   t)
 
-(defmethod nth-value-type :before ((n integer) (function function))
-  (check-type n (integer 0)))
-
-(defmethod nth-argument-type :before ((n integer) (function function))
-  (check-type n (integer 0)))
-
 (defmethod nth-value-type ((n integer) (function function))
   (cond ((rest-values-p function)
          (if (< n call-arguments-limit)
@@ -27,6 +31,10 @@
                  (optional-values function)))
          't)
         (t 'null)))
+
+(defmethod nth-argument-type ((n integer) (function function))
+  (assert (<= 0 n (1- (arity function))))
+  't)
 
 (defmethod argument-types ((function function))
   (loop for n below (arity function)

@@ -44,6 +44,10 @@
         (values mandatory-arguments max-arguments)
         (values mandatory-arguments call-arguments-limit))))
 
+(defun function-arity (function)
+  (lambda-list-arity
+   (function-lambda-list function)))
+
 (defun check-arity (function number-of-supplied-arguments)
   (multiple-value-bind (mandatory-arguments max-arguments)
       (lambda-list-arity
