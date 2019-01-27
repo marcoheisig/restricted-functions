@@ -1,12 +1,9 @@
 (cl:in-package #:common-lisp-user)
 
-(cl:defpackage :restricted-functions
+(cl:defpackage #:restricted-functions
   (:use :closer-common-lisp)
   (:export
-
-   ;; The restricted function protocol.
    #:restricted-function
-   #:restricted-function-p
    #:restrict
    #:function-name
    #:original-function-name

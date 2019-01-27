@@ -1,11 +1,12 @@
-(in-package :restricted-functions)
+(in-package #:restricted-functions)
 
-(defun function-lambda-list (function)
-  "Return the lambda list of FUNCTION.  Signal an error if the
-implementation has no means to determine the function's lambda list."
+(defun function-lambda-list (function &optional (errorp t))
+  "Return the lambda list of FUNCTION, or an approximation thereof."
   (let ((arglist (trivial-arguments:arglist function)))
     (if (eq arglist :unknown)
-        '(&rest anything)
+        (if errorp
+            (error "Cannot determine the lambda list of ~S." function)
+            '(&rest anything))
         arglist)))
 
 (defun lambda-list-arity (lambda-list)
@@ -32,7 +33,7 @@ implementation has no means to determine the function's lambda list."
         ((&aux)
          (setf max-increment 0)
          (setf mandatory-increment 0))
-        ((&rest &allow-other-keys #+ccl ccl::&lexpr)
+        ((&rest &allow-other-keys #+ccl ccl::&lexpr #+sbcl sb-int:&more)
          (setf max-increment 0)
          (setf mandatory-increment 0)
          (setf upper-bound-p nil))
@@ -46,10 +47,10 @@ implementation has no means to determine the function's lambda list."
 (defun check-arity (function number-of-supplied-arguments)
   (multiple-value-bind (mandatory-arguments max-arguments)
       (lambda-list-arity
-       (function-lambda-list function))
+       (function-lambda-list function nil))
     (unless (>= number-of-supplied-arguments mandatory-arguments)
-      (error "~@<Only ~R argument~:P given for ~S, with ~
-                 ~R mandatory argument~:P.~:@>"
+      (error "~@<Only ~R argument~:P given for ~S, which ~
+                 expects ~R mandatory argument~:P.~:@>"
              number-of-supplied-arguments
              function
              mandatory-arguments))

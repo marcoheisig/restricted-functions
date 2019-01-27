@@ -1,17 +1,16 @@
-(in-package :restricted-functions)
+(in-package #:restricted-functions)
 
-(defgeneric restrict (function argument-types)
-  (:method ((symbol symbol) (argument-types list))
-    (restrict (fdefinition symbol) argument-types))
+(defun restrict (function argument-types &optional strategy)
+  (restrict-using-strategy function argument-types strategy))
+
+(defgeneric restrict-using-strategy (function argument-types strategy)
+  (:method ((symbol symbol) (argument-types list) strategy)
+    (restrict (fdefinition symbol) argument-types strategy))
   (:documentation
    "Returns a function with the same semantics as FUNCTION, but whose
 domain is restricted to arguments of the given ARGUMENT-TYPES.  If
 possible, the result is a subclass of RESTRICTED-FUNCTION and can be
 queried for a variety of information."))
-
-(defgeneric restricted-function-p (object)
-  (:documentation
-   "Returns whether OBJECT is a restricted function."))
 
 (defgeneric function-name (function)
   (:method ((symbol symbol))
@@ -75,45 +74,3 @@ for the Nth argument of FUNCTION."))
     (function-type (fdefinition symbol)))
   (:documentation
    "Returns a type specifier describing FUNCTION."))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Methods
-
-(defmethod restrict :before ((function function) (argument-types list))
-  (check-arity function (length argument-types)))
-
-(defmethod restricted-function-p ((object t))
-  nil)
-
-(defmethod minimum-number-of-values ((function function))
-  0)
-
-(defmethod maximum-number-of-values ((function function))
-  (1- multiple-values-limit))
-
-(defmethod nth-value-type :before ((n integer) (function function))
-  (assert (<= 0 n)))
-
-(defmethod nth-argument-type :before ((n integer) (function function))
-  (assert (<= 0 n)))
-
-(defmethod nth-value-type ((n integer) (function function))
-  (cond ((< n (maximum-number-of-values function)) 't)
-        (t 'null)))
-
-(defmethod argument-types ((function function))
-  (loop for n below (arity function)
-        collect (nth-argument-type n function)))
-
-(defmethod values-types ((function function))
-  `(,@(loop for n below (minimum-number-of-values function)
-            collect (nth-value-type n function))
-    ,@(if (= (minimum-number-of-values function)
-             (maximum-number-of-values function))
-          '()
-          '(&rest t))))
-
-(defmethod function-type ((function function))
-  `(ftype ,(argument-types function)
-          ,@(values-types function)))

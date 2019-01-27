@@ -1,4 +1,4 @@
-(in-package :restricted-functions)
+(in-package #:restricted-functions)
 
 (declaim (hash-table *restrictor-table*))
 
