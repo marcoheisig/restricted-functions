@@ -1,64 +1,91 @@
 (in-package #:restricted-functions)
 
 (defclass restricted-function (funcallable-standard-object)
-  ((%name :initform nil :reader function-name))
+  ((%name :initarg :name :reader name)
+   (%original-function :initarg :original-function :reader original-function)
+   (%argument-types :initarg :argument-types :reader argument-types)
+   (%result-types :initarg :result-types :reader result-types)
+   (%mandatory-values :initarg :mandatory-values :reader mandatory-values)
+   (%optional-values :initarg :optional-values :reader optional-values)
+   (%rest-values-p :initarg :rest-values-p :reader rest-values-p))
   (:metaclass funcallable-standard-class))
-
-(defmethod shared-initialize :after
-    ((instance restricted-function) slot-names &key &allow-other-keys)
-  (declare (ignore slot-names))
-  (ensure-restricted-function-name instance)
-  (ensure-restricted-function-instance-function instance)
-  (ensure-restricted-function-fdefinition instance)
-  (ensure-restricted-function-compiler-macro instance))
 
 (defmethod print-object ((rf restricted-function) stream)
   (print-unreadable-object (rf stream :type t :identity t)
-    (write (function-name rf) :stream stream)))
+    (format stream "~S (~{~S~^ ~})"
+            (name rf)
+            (coerce (argument-types rf) 'list))))
 
-(defun ensure-restricted-function-name (rf)
-  (unless (slot-boundp rf '%name))
-  (setf (slot-value rf '%name)
-        (compute-restricted-function-name
-         (original-function-name rf)
-         (argument-types rf))))
+(defun make-restricted-function
+    (original-function argument-types values-type)
+  (multiple-value-bind (mandatory optional rest-values-p)
+      (parse-values-type values-type)
+    (let* ((name (generate-restricted-function-name))
+           (rf (make-instance 'restricted-function
+                 :name name
+                 :original-function (coerce original-function 'function)
+                 :argument-types (coerce argument-types 'simple-vector)
+                 :result-types (concatenate 'simple-vector mandatory optional)
+                 :mandatory-values (length mandatory)
+                 :optional-values (length optional)
+                 :rest-values-p rest-values-p)))
+      (set-funcallable-instance-function rf original-function)
+      (setf (fdefinition name) rf)
+      (setf (compiler-macro-function name)
+            (compute-compiler-macro-function rf))
+      rf)))
 
-(defun compute-restricted-function-name (fname types)
-  (values
-   (intern
-    (with-output-to-string (stream)
-      (with-standard-io-syntax
-        (format stream "~A::~A ~{~A~^ ~}"
-                (package-name (symbol-package fname))
-                (symbol-name fname)
-                types)))
-    :restricted-functions)))
+(defun parse-values-type (values-type)
+  (if (and (consp values-type)
+           (eq (car values-type) 'values))
+      (labels ((mandatory (rest mandatory)
+                 (if (null rest)
+                     (done mandatory '() nil)
+                     (case (car rest)
+                       (&optional (optional rest mandatory '()))
+                       (&rest (done mandatory '() t))
+                       (otherwise (mandatory (cdr rest) (cons (car rest) mandatory))))))
+               (optional (rest mandatory optional)
+                 (if (null rest)
+                     (done mandatory optional nil)
+                     (case (car rest)
+                       (&rest (done mandatory optional t))
+                       (otherwise (optional (cdr rest) mandatory (cons (car rest) optional))))))
+               (done (mandatory optional rest-p)
+                 (values (nreverse mandatory)
+                         (nreverse optional)
+                         rest-p)))
+        (mandatory (rest values-type) '()))
+      (values values-type nil nil)))
 
-(defun ensure-restricted-function-instance-function (rf)
-  (set-funcallable-instance-function
-   rf
-   (let ((fn (original-function-name rf)))
-     (lambda (&rest args)
-       (apply fn args)))))
+(defun generate-restricted-function-name ()
+  (loop
+    (multiple-value-bind (symbol status)
+        (intern (genstring "RESTRICTED-FUNCTION-") #.*package*)
+      (when (null status)
+        (return symbol)))))
 
-(defun ensure-restricted-function-fdefinition (rf)
-  (setf (fdefinition (function-name rf)) rf))
+(defun genstring (&optional (prefix "G"))
+  (with-output-to-string (stream)
+    (format stream "~A~X" prefix (random most-positive-fixnum))))
 
-(defun ensure-restricted-function-compiler-macro (rf)
-  (setf (compiler-macro-function (function-name rf))
-        (let ((values-type-specifier `(values ,@(values-types rf)))
-              (argument-types (argument-types rf))
-              (original-function (original-function-name rf))
-              (arity (arity rf)))
-          (lambda (form environment)
-            (declare (ignore environment))
-            (destructuring-bind (function &rest arguments) form
-              (declare (ignore function))
-              (assert (= (length arguments) arity))
-              `(the
-                ,values-type-specifier
-                (,original-function
-                 ,@(loop for argument in arguments
-                         for argument-type in argument-types
-                         collect `(the ,argument-type ,argument)))))))))
+(defun compute-compiler-macro-function (rf)
+  (let ((values-type-specifier (values-type rf))
+        (argument-types (argument-types rf))
+        (original-function (original-function rf))
+        (arity (arity rf)))
+    (lambda (form environment)
+      (declare (ignore environment))
+      (destructuring-bind (function &rest arguments) form
+        (declare (ignore function))
+        (assert (= (length arguments) arity))
+        `(the ,values-type-specifier
+              (funcall ,original-function
+                       ,@(loop for argument in arguments
+                               for argument-type in argument-types
+                               collect
+                               `(the ,argument-type ,argument))))))))
 
+(defmethod arity ((rf restricted-function))
+  (length
+   (argument-types rf)))

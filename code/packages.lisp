@@ -8,8 +8,9 @@
    #:function-name
    #:original-function-name
    #:arity
-   #:minimum-number-of-values
-   #:maximum-number-of-values
+   #:mandatory-values
+   #:optional-values
+   #:rest-values-p
    #:nth-value-type
    #:nth-argument-type
    #:argument-types

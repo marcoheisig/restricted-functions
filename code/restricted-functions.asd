@@ -8,13 +8,15 @@
    "closer-mop"
    "simplified-types"
    "trivia"
-   "trivial-arguments")
+   "trivial-arguments"
+   "trivial-garbage")
 
   :components
   ((:file "packages")
+   (:file "generic-functions")
    (:file "function-lambda-lists")
-   (:file "protocol")
-   (:file "function")
+   (:file "default-methods")
+   (:file "infer-type")
    (:file "restricted-function")
-   (:file "simple-restricted-function")
-   (:file "type-inference")))
+   (:file "restricted-function-cache")
+   (:file "restrict")))

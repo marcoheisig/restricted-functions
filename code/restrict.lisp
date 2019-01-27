@@ -1,50 +1,17 @@
 (in-package #:restricted-functions)
 
-(declaim (hash-table *restrictor-table*))
+(defun restrict (function argument-types
+                 &key cache strategy
+                   (simplification #'identity))
+  (unless (eq simplification #'identity)
+    (setf argument-types (mapcar simplification argument-types)))
+  (cond ((not cache) (%restrict function argument-types strategy))
+        ((restricted-function-cache-value cache function argument-types strategy))
+        ((setf (restricted-function-cache-value cache function argument-types strategy)
+               (%restrict function argument-types strategy)))))
 
-(defvar *restrictor-table* (make-hash-table :test #'eq))
-
-(defmacro defrestrictor (function-name (function-name-var type-var) &body body)
-  (check-type function-name-var symbol)
-  (check-type type-var symbol)
-  `(ensure-restrictor
-    ',function-name
-    (lambda (,function-name-var ,type-var)
-      ,@body)))
-
-(defun ensure-restrictor (original-function-name function)
-  (check-type original-function-name symbol)
-  (check-type function function)
-  (setf (gethash (fdefinition original-function-name) *restrictor-table*)
-        (lambda (types)
-          (funcall function original-function-name types))))
-
-(defun find-restrictor (function-designator)
-  (values
-   (gethash (coerce function-designator 'function) *restrictor-table*)))
-
-(defmethod restrict ((rf restricted-function) (argument-types list))
-  (restrict (original-function-name rf) argument-types))
-
-(defmethod restrict ((function function) (argument-types list))
-  (let ((restrictor (find-restrictor function)))
-    (if (null restrictor)
-        function
-        (funcall restrictor argument-types))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Caching
-
-(declaim (hash-table *restricted-function-cache*))
-
-(defvar *restricted-function-cache* (make-hash-table :test #'equal))
-
-(defmethod restrict :around ((object t) (argument-types list))
-  (let ((key (cons object argument-types)))
-    (multiple-value-bind (value present-p)
-        (gethash key *restricted-function-cache*)
-      (if (not present-p)
-          (let ((value (call-next-method)))
-            (setf (gethash key *restricted-function-cache*) value))
-          value))))
+(defun %restrict (function argument-types strategy)
+  (make-restricted-function
+   function
+   argument-types
+   (infer-type function argument-types strategy)))
