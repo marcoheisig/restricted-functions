@@ -38,7 +38,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Arithmetic Functions
+;;; Arithmetic Functions - CLHS Figure 12-1
 
 (defun parse-number-type (type)
   (check-type type simplified-types:simplified-number-type-specifier)
@@ -155,3 +155,14 @@
         `(integer ,(1- lb) ,(1- ub)))
       (multiple-value-call #'unparse-number-type
         (parse-number-type number))))
+
+;;; TODO floor ceiling truncate round
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Exponentials, Logarithms and Trigonometry  - CLHS Figure 12-2
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Numeric Comparison and Predication - CLHS Figure 12-3
