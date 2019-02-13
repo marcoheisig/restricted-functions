@@ -1,15 +1,27 @@
 (in-package #:restricted-functions)
 
-(defvar *default-strategy* (make-instance 'default-strategy))
-
-(defmethod restrict :around (strategy function &rest argument-types)
+(defmethod restrict ((strategy null) function &rest argument-types)
   (if (functionp function)
-      (if (null strategy)
-          (apply #'restrict *default-strategy* function argument-types)
-          (call-next-method))
-      (if (null strategy)
-          (apply #'restrict *default-strategy* (coerce function 'function) argument-types)
-          (apply #'restrict strategy (coerce function 'function) argument-types))))
+      (apply #'restrict *default-strategy* function argument-types)
+      (apply #'restrict *default-strategy* (coerce function 'function) argument-types)))
+
+(defmethod restrict (strategy (function function) &rest argument-types)
+  (multiple-value-bind (mandatory optional rest-values-p)
+      (parse-values-type (apply #'infer-type strategy function argument-types))
+    (let* ((name (generate-restricted-function-name))
+           (rf (make-instance 'restricted-function
+                 :name name
+                 :original-function function
+                 :mandatory-values (length mandatory)
+                 :optional-values (length optional)
+                 :rest-values-p rest-values-p
+                 :atypes (coerce argument-types 'simple-vector)
+                 :rtypes (concatenate 'simple-vector mandatory optional))))
+      (set-funcallable-instance-function rf function)
+      (setf (fdefinition name) rf)
+      (setf (compiler-macro-function name)
+            (compute-compiler-macro-function rf))
+      rf)))
 
 (defmethod infer-type :before (strategy (function function) &rest argument-types)
   (declare (ignore strategy))

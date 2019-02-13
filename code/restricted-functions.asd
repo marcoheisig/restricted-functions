@@ -18,8 +18,8 @@
    (:file "generic-functions")
    (:file "type-inference")
    (:file "strategies")
-   (:file "default-methods")
    (:file "restricted-function")
+   (:file "default-methods")
 
    (:module "type-inference-rules"
     :components

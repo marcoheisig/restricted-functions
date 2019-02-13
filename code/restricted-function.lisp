@@ -16,24 +16,6 @@
             (original-function rf)
             (coerce (argument-types rf) 'list))))
 
-(defmethod restrict (strategy (function function) &rest argument-types)
-  (multiple-value-bind (mandatory optional rest-values-p)
-      (parse-values-type (apply #'infer-type strategy function argument-types))
-    (let* ((name (generate-restricted-function-name))
-           (rf (make-instance 'restricted-function
-                 :name name
-                 :original-function function
-                 :mandatory-values (length mandatory)
-                 :optional-values (length optional)
-                 :rest-values-p rest-values-p
-                 :atypes (coerce argument-types 'simple-vector)
-                 :rtypes (concatenate 'simple-vector mandatory optional))))
-      (set-funcallable-instance-function rf function)
-      (setf (fdefinition name) rf)
-      (setf (compiler-macro-function name)
-            (compute-compiler-macro-function rf))
-      rf)))
-
 (defun parse-values-type (values-type)
   (if (and (consp values-type)
            (eq (car values-type) 'values))

@@ -28,8 +28,13 @@
     ((strategy restricted-function-caching)
      (function function)
      &rest argument-types)
-  ;; TODO
-  (call-next-method))
+  (let ((key (list* function argument-types))
+        (cache (restricted-function-cache strategy)))
+    (multiple-value-bind (value present-p)
+        (gethash key cache)
+      (if present-p
+          value
+          (setf (gethash key cache) (call-next-method))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -39,3 +44,5 @@
     (argument-type-simplification
      restricted-function-caching)
   ())
+
+(defvar *default-strategy* (make-instance 'default-strategy))
