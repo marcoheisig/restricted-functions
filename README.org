@@ -8,21 +8,25 @@ functions that have been narrowed to a particular set of argument types.
 
 Each restricted function is an instance of =funcallable-standard-class=,
 and can be queried for a wide range of metadata, such as the number and
-type of the values it returns, its name, or its arity.  In particular, it
-is possible to query the cost of a restricted function in terms of CPU
-cycles, loads, stores and heap allocation on a given platform and Lisp
-implementation.
+type of the values it returns, its name, or its arity.  The most important
+feature is the automatic derivation of argument types.  This library can
+infer the type of a wide range of functions from the Common Lisp standard.
 
-Another feature is that each restricted function automatically defines an
-optimizing compiler macro of the same name.  This is convenient for writing
-code generators, where one can just write
+A future goal is to make it possible to query the cost of a restricted
+function in terms of CPU cycles, loads, stores and heap allocation on a
+given platform and Lisp implementation.
+
+A particularly useful feature is that each restricted function has an
+automatically generated name and an optimizing compiler macro for that
+name.  This is convenient for writing code generators, where one can just
+write
 
 #+BEGIN_SRC lisp
-(let ((rf (restrict #'+ '(double-float double-float))))
+(let ((rf (restrict #'+ 'double-float 'double-float)))
   (compile
    nil
    `(lambda (x y)
-      (,(function-name rf) x y))))
+      (,(name rf) x y))))
 #+END_SRC
 
 to get the equivalent of
