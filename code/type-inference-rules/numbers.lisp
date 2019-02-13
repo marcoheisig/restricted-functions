@@ -1,41 +1,5 @@
 (in-package #:restricted-functions)
 
-(defclass simplified-type-inference ()
-  ((%assume-simplified-argument-types
-    :initarg :assume-simplified-argument-types
-    :reader assume-simplified-argument-types))
-  (:default-initargs :assume-simplified-argument-types nil))
-
-(defmethod restrict :around
-    ((strategy simplified-type-inference)
-     (function function)
-     &rest argument-types)
-  (if (assume-simplified-argument-types strategy)
-      (call-next-method)
-      (apply #'call-next-method
-             strategy
-             function
-             (mapcar #'simplified-types:simplify-type argument-types))))
-
-(defparameter *simplified-type-inference-functions*
-  (make-hash-table :test #'eq))
-
-(defmacro simplified-type-inference-function (function)
-  `(values (gethash ,function *simplified-type-inference-functions*)))
-
-(defmethod infer-type
-    ((strategy simplified-type-inference)
-     (function function)
-     &rest argument-types)
-  (let ((s-t-i-f (simplified-type-inference-function function)))
-    (if (not s-t-i-f)
-        (call-next-method) ; Return the type '(values &rest t)
-        (apply s-t-i-f argument-types))))
-
-(defmacro define-simplified-type-inference-rule (fname args &body body)
-  `(setf (simplified-type-inference-function #',fname)
-         (lambda ,args ,@body)))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; CLHS Figure 12-1 - Arithmetic Functions
@@ -94,7 +58,7 @@
                 (cons integer
                  (cons integer null)))))
 
-(define-simplified-type-inference-rule + (&rest numbers)
+(define-type-inference-rule + (&rest numbers)
   (if (null numbers)
       '(integer 0 0)
       (if (every #'bounded-integer-type-p numbers)
@@ -106,7 +70,7 @@
                      `(integer ,lower-bound ,upper-bound)))
           (reduce #'numeric-contagion numbers))))
 
-(define-simplified-type-inference-rule - (number &rest more-numbers)
+(define-type-inference-rule - (number &rest more-numbers)
   (if (null more-numbers)
       number
       (if (and (bounded-integer-type-p number)
@@ -121,7 +85,7 @@
                                  ,(- ub min-subtraction)))))
           (reduce #'numeric-contagion more-numbers :initial-value number))))
 
-(define-simplified-type-inference-rule * (&rest numbers)
+(define-type-inference-rule * (&rest numbers)
   (if (null numbers)
       '(integer 1 1)
       (if (every #'bounded-integer-type-p numbers)
@@ -137,20 +101,20 @@
             (reduce #'integer-type-* numbers))
           (reduce #'numeric-contagion numbers))))
 
-(define-simplified-type-inference-rule / (number &rest more-numbers)
+(define-type-inference-rule / (number &rest more-numbers)
   (if (and (bounded-integer-type-p number)
            (every #'bounded-integer-type-p more-numbers))
       't
       (reduce #'numeric-contagion more-numbers :initial-value number)))
 
-(define-simplified-type-inference-rule 1+ (number)
+(define-type-inference-rule 1+ (number)
   (if (bounded-integer-type-p number)
       (destructuring-bind (lb ub) (rest number)
         `(integer ,(1+ lb) ,(1+ ub)))
       (multiple-value-call #'unparse-number-type
         (parse-number-type number))))
 
-(define-simplified-type-inference-rule 1- (number)
+(define-type-inference-rule 1- (number)
   (if (bounded-integer-type-p number)
       (destructuring-bind (lb ub) (rest number)
         `(integer ,(1- lb) ,(1- ub)))

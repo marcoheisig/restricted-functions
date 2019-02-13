@@ -16,6 +16,11 @@
   ((:file "packages")
    (:file "function-lambda-lists")
    (:file "generic-functions")
+   (:file "type-inference")
+   (:file "strategies")
    (:file "default-methods")
    (:file "restricted-function")
-   (:file "simplified-type-inference")))
+
+   (:module "type-inference-rules"
+    :components
+    ((:file "numbers")))))
