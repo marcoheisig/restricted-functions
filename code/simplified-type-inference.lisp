@@ -6,7 +6,7 @@
     :reader assume-simplified-argument-types))
   (:default-initargs :assume-simplified-argument-types nil))
 
-(defmethod infer-type :around
+(defmethod restrict :around
     ((strategy simplified-type-inference)
      (function function)
      &rest argument-types)

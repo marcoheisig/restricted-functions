@@ -12,7 +12,7 @@
 
 (defmethod print-object ((rf restricted-function) stream)
   (print-unreadable-object (rf stream :type t :identity t)
-    (format stream "~S (~{~S~^ ~})"
+    (format stream "~S ~{~S~^ ~}"
             (original-function rf)
             (coerce (argument-types rf) 'list))))
 
