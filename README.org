@@ -19,7 +19,7 @@ infer the type of a wide range of functions from the Common Lisp standard.
 Type inference can be performed with the function =infer-type=:
 
 #+BEGIN_SRC lisp
-(restrict nil '+ 'double-float '(complex short-float))
+(infer-type nil '* '(integer 2 14) '(integer 0 12)) ; => (integer 0 168)
 #+END_SRC
 
 A future goal is to make it possible to query the cost of a restricted
@@ -32,7 +32,7 @@ name.  This is convenient for writing code generators, where one can just
 write
 
 #+BEGIN_SRC lisp
-(let ((rf (restrict #'+ 'double-float 'double-float)))
+(let ((rf (restrict nil #'+ 'double-float 'double-float)))
   (compile
    nil
    `(lambda (x y)
