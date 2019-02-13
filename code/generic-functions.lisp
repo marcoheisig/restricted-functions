@@ -5,15 +5,17 @@
    "Returns a restricted function that is equivalent to FUNCTION, but only
 applicable to arguments of the given ARGUMENT-TYPES.  This restricted
 function can the either be called directly, or queried for a variety of
-information, such as the type of the values it returns.
+information, such as the type of the values it returns.  Internally,
+RESTRICT calls INFER-TYPE on the same arguments to determine the type of
+the possible values of FUNCTION.
 
 The first argument, STRATEGY, influences how fast or precise type inference
-ought to be done, or whether to use caching or not.  Currently supported
-strategies are:
+ought to be done, or whether to use caching or not.  The default
+strategy (used when STRATEGY is NIL), simplifies all argument types before
+use and caches restricted functions unconditionally.
 
-SIMPLIFIED - Perform type inference on simplified type specifiers, using
-the library SIMPLIFIED-TYPES.
-"))
+New strategies can be defined by the user by specializing on RESTRICT and
+INFER-TYPE."))
 
 (defgeneric infer-type (strategy function &rest argument-types)
   (:documentation
