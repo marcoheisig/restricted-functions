@@ -3,10 +3,16 @@
 (cl:defpackage #:restricted-functions
   (:use :closer-common-lisp)
   (:export
+   ;; Classes
    #:restricted-function
+   #:argument-type-simplification
+   #:restricted-function-caching
+
+   ;; Generic Functions
    #:restrict
-   #:function-name
-   #:original-function-name
+   #:infer-type
+   #:name
+   #:original-function
    #:arity
    #:mandatory-values
    #:optional-values
@@ -14,5 +20,5 @@
    #:nth-value-type
    #:nth-argument-type
    #:argument-types
-   #:value-types
+   #:values-type
    #:function-type))
