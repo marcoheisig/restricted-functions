@@ -14,10 +14,8 @@
   :serial t
   :components
   ((:file "packages")
-   (:file "generic-functions")
    (:file "function-lambda-lists")
+   (:file "generic-functions")
    (:file "default-methods")
    (:file "restricted-function")
-   (:file "restricted-function-cache")
-   (:file "simplified-type-inference")
-   (:file "restrict")))
+   (:file "simplified-type-inference")))

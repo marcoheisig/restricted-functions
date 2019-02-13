@@ -6,30 +6,29 @@
    (%mandatory-values :initarg :mandatory-values :reader mandatory-values)
    (%optional-values :initarg :optional-values :reader optional-values)
    (%rest-values-p :initarg :rest-values-p :reader rest-values-p)
-   (%atypes :initarg :atypes :reader atypes)
-   (%rtypes :initarg :rtypes :reader rtypes))
+   (%atypes :initarg :atypes :reader atypes :type simple-vector)
+   (%rtypes :initarg :rtypes :reader rtypes :type simple-vector))
   (:metaclass funcallable-standard-class))
 
 (defmethod print-object ((rf restricted-function) stream)
   (print-unreadable-object (rf stream :type t :identity t)
     (format stream "~S (~{~S~^ ~})"
-            (name rf)
+            (original-function rf)
             (coerce (argument-types rf) 'list))))
 
-(defun make-restricted-function
-    (original-function argument-types values-type)
+(defmethod restrict (strategy (function function) &rest argument-types)
   (multiple-value-bind (mandatory optional rest-values-p)
-      (parse-values-type values-type)
+      (parse-values-type (apply #'infer-type strategy function argument-types))
     (let* ((name (generate-restricted-function-name))
            (rf (make-instance 'restricted-function
                  :name name
-                 :original-function (coerce original-function 'function)
+                 :original-function function
                  :mandatory-values (length mandatory)
                  :optional-values (length optional)
                  :rest-values-p rest-values-p
                  :atypes (coerce argument-types 'simple-vector)
                  :rtypes (concatenate 'simple-vector mandatory optional))))
-      (set-funcallable-instance-function rf original-function)
+      (set-funcallable-instance-function rf function)
       (setf (fdefinition name) rf)
       (setf (compiler-macro-function name)
             (compute-compiler-macro-function rf))
@@ -87,8 +86,7 @@
                                `(the ,argument-type ,argument))))))))
 
 (defmethod arity ((rf restricted-function))
-  (length
-   (atypes rf)))
+  (length (atypes rf)))
 
 (defmethod nth-value-type ((n integer) (rf restricted-function))
   (svref (rtypes rf) n))

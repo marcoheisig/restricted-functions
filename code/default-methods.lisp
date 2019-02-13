@@ -1,10 +1,18 @@
 (in-package #:restricted-functions)
 
-(defmethod infer-type :before ((function function) argument-types strategy)
+(defmethod restrict (strategy function &rest argument-types)
+  (if (functionp function)
+      (call-next-method)
+      (apply #'restrict strategy (coerce function 'function) argument-types)))
+
+(defmethod infer-type :before (strategy (function function) &rest argument-types)
+  (declare (ignore strategy))
   (check-arity function (length argument-types)))
 
-(defmethod infer-type ((function function) argument-types strategy)
-  '(values &rest t))
+(defmethod infer-type (strategy function &rest argument-types)
+  (if (functionp function)
+      '(values &rest t)
+      (apply #'infer-type strategy (coerce function 'function) argument-types)))
 
 (defmethod arity ((function function))
   (multiple-value-bind (mandatory maximal)
