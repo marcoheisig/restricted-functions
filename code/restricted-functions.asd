@@ -16,7 +16,6 @@
   ((:file "packages")
    (:file "function-lambda-lists")
    (:file "generic-functions")
-   (:file "type-inference")
    (:file "strategies")
    (:file "restricted-function")
    (:file "default-methods")

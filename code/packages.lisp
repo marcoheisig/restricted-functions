@@ -3,10 +3,12 @@
 (cl:defpackage #:restricted-functions
   (:use :closer-common-lisp)
   (:export
-   ;; Classes
    #:restricted-function
-   #:argument-type-simplification
+   ;; Strategies
+   #:argument-type-simplification-around-restrict
+   #:argument-type-simplification-around-infer-type
    #:restricted-function-caching
+   #:default-type-inference
 
    ;; Generic Functions
    #:restrict

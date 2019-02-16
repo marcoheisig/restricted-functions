@@ -1,9 +1,7 @@
 (in-package #:restricted-functions)
 
-(defmethod restrict ((strategy null) function &rest argument-types)
-  (if (functionp function)
-      (apply #'restrict *default-strategy* function argument-types)
-      (apply #'restrict *default-strategy* (coerce function 'function) argument-types)))
+(defmethod restrict ((strategy null) (function function) &rest argument-types)
+  (apply #'restrict *default-strategy-for-restrict* function argument-types))
 
 (defmethod restrict (strategy (function function) &rest argument-types)
   (multiple-value-bind (mandatory optional rest-values-p)
@@ -23,17 +21,12 @@
             (compute-compiler-macro-function rf))
       rf)))
 
-(defmethod infer-type :before (strategy (function function) &rest argument-types)
-  (declare (ignore strategy))
-  (check-arity function (length argument-types)))
+(defmethod infer-type ((strategy null) (function function) &rest argument-types)
+  (apply #'infer-type *default-strategy-for-infer-type* function argument-types))
 
-(defmethod infer-type (strategy function &rest argument-types)
-  (if (not (functionp function))
-      (apply #'infer-type strategy (coerce function 'function) argument-types)
-      (let ((inference-function (type-inference-function function)))
-        (if (not inference-function)
-            '(values &rest t)
-            (apply inference-function argument-types)))))
+(defmethod infer-type (strategy (function function) &rest argument-types)
+  (declare (ignore strategy function argument-types))
+  '(values &rest t))
 
 (defmethod arity ((function function))
   (multiple-value-bind (mandatory maximal)
