@@ -13,7 +13,8 @@
 (defmethod print-object ((rf restricted-function) stream)
   (print-unreadable-object (rf stream :type t :identity t)
     (format stream "~S ~{~S~^ ~}"
-            (original-function rf)
+            (or (nth-value 2 (function-lambda-expression (original-function rf)))
+                (original-function rf))
             (coerce (argument-types rf) 'list))))
 
 (defun parse-values-type (values-type)
