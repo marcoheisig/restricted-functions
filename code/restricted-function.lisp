@@ -72,7 +72,12 @@
   (length (atypes rf)))
 
 (defmethod nth-value-type ((n integer) (rf restricted-function))
-  (svref (rtypes rf) n))
+  (with-accessors ((rtypes rtypes)) rf
+    (if (< n (length rtypes))
+        (svref rtypes n)
+        (if (rest-values-p rf)
+            't
+            'null))))
 
 (defmethod nth-argument-type ((n integer) (rf restricted-function))
   (svref (atypes rf) n))
