@@ -17,7 +17,7 @@
       (if (member atomic-type '(nil integer))
           't
           `(complex ,atomic-type))
-      (if (null atomic-type)
+      (if (eq atomic-type 'integer)
           '(integer * *)
           atomic-type)))
 
