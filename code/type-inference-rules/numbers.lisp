@@ -71,19 +71,21 @@
           (reduce #'numeric-contagion numbers))))
 
 (define-type-inference-rule - (number &rest more-numbers)
-  (if (null more-numbers)
-      number
-      (if (and (bounded-integer-type-p number)
-               (every #'bounded-integer-type-p more-numbers))
-          (loop for (nil lb ub) in more-numbers
-                sum lb into min-subtraction
-                sum ub into max-subtraction
-                finally
-                   (destructuring-bind (lb ub) (rest number)
-                     (return
-                       `(integer ,(- lb max-subtraction)
-                                 ,(- ub min-subtraction)))))
-          (reduce #'numeric-contagion more-numbers :initial-value number))))
+  (cond ((null more-numbers)
+         (if (bounded-integer-type-p number)
+             `(integer ,(- (third number)) ,(- (second number)))
+             number))
+        ((and (bounded-integer-type-p number)
+              (every #'bounded-integer-type-p more-numbers))
+         (loop for (nil lb ub) in more-numbers
+               sum lb into min-subtraction
+               sum ub into max-subtraction
+               finally
+                  (destructuring-bind (lb ub) (rest number)
+                    (return
+                      `(integer ,(- lb max-subtraction)
+                                ,(- ub min-subtraction))))))
+        (t (reduce #'numeric-contagion more-numbers :initial-value number))))
 
 (define-type-inference-rule * (&rest numbers)
   (if (null numbers)
